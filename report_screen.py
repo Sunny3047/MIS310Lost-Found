@@ -6,6 +6,7 @@ from datetime import date
 from constants import BG, ACCENT, BTN_SEC_BG, FONT_HEAD, FONT_BODY, FONT_SMALL, PAD
 from constants import make_banner, styled_btn
 import database as db
+import notifications_onesignal as notify
 
 
 class ReportScreen(tk.Frame):
@@ -134,9 +135,14 @@ class ReportScreen(tk.Frame):
         date_val    = self.date_var.get().strip()
         image_path  = self._image_path
 
+         # Saving to database
         db.insert_report(report_type, item_name, category,
                          description, location, date_val, image_path)
-        messagebox.showinfo("Success", "✅  Report submitted successfully!")
+
+        # Broadcast OneSignal notification to all users in the background
+        notify.notify_new_report(report_type, item_name, location)
+
+        messagebox.showinfo("Success", "Report submitted successfully!")
         self._clear()
         self.controller.show_home()
 

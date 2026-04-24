@@ -9,10 +9,12 @@ MY_API_KEY = "YOUR_API_KEY_HERE"
 # We need these built-in Python tools to send data over the internet
 import urllib.request
 import json
+import threading #Stops the UI from freezing
 
 
 # This function sends a notification to everyone using the app
 def send_notification(title, message):
+    """POST a broadcast notification to all OneSignal subscribers."""
 
     # This is the website address we send the notification to
     url = "https://onesignal.com/api/v1/notifications"
@@ -57,5 +59,8 @@ def notify_new_report(report_type, item_name, location):
     title   = "New " + report_type + " Item: " + item_name
     message = "Location: " + location
 
-    # Now actually send it
-    send_notification(title, message)
+    threading.Thread(
+        target=send_notification,
+        args=(title, message),
+        daemon=True  # thread closes automatically when the app exits
+    ).start()
