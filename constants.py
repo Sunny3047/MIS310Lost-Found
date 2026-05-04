@@ -35,11 +35,14 @@ def styled_btn(parent, text, command, bg=BTN_BG, fg=BTN_FG, **kw):
     return tk.Button(parent, text=text, command=command,
                      bg=bg, fg=fg, font=FONT_BODY,
                      relief="flat", padx=12, pady=6,
-                     activebackground="#004080", activeforeground=fg,
+                     activebackground="#004080", activeforeground="white",
                      cursor="hand2", **kw)
 
 
 # Format a report dict as a single listbox line
 def format_row(r):
-    tag = "[LOST]" if r["report_type"] == "Lost" else "[FOUND]"
-    return f"{tag}  {r['item_name']:<30}  {r['location']:<20}  {r['date']}"
+    tag = "[LOST] " if r["report_type"] == "Lost" else "[FOUND]"
+    item = r['item_name'][:25]  # Limit item name length
+    location = r['location'][:18]  # Limit location length
+    date = r['date']
+    return f"{tag} {item:<25} | {location:<18} | {date}"

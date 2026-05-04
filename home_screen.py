@@ -2,14 +2,14 @@
 
 import tkinter as tk
 from tkinter import messagebox
-from constants import BG, ACCENT, BTN_SEC_BG, FONT_HEAD, FONT_BODY, FONT_SMALL, PAD
+from constants import BG, ACCENT, BTN_SEC_BG, FONT_HEAD, FONT_BODY, FONT_SMALL, PAD, BTN_BG
 from constants import make_banner, styled_btn, format_row
 import database as db
 
 # Algolia smart search for a fallback if not installed
 try:
     from algoliasearch.search_client import SearchClient
-    from config import ALGOLIA_APP_ID, ALGOLIA_SEARCH_KEY, ALGOLIA_INDEX_NAME
+    from Configurations import ALGOLIA_APP_ID, ALGOLIA_SEARCH_KEY, ALGOLIA_INDEX_NAME
 
     _algolia_index = SearchClient.create(ALGOLIA_APP_ID, ALGOLIA_SEARCH_KEY) \
         .init_index(ALGOLIA_INDEX_NAME)
@@ -18,14 +18,14 @@ except Exception:
     _algolia_index = None
     ALGOLIA_ON = False
 
-# OpenAI matching fallback if key not set
+# Anthropic AI matching fallback if key not set
 try:
-    from config import OPENAI_API_KEY
-    import openai_service
+    from Configurations import ANTHROPIC_API_KEY
+    import anthropic_service
 
-    OPENAI_ON = OPENAI_API_KEY != "YOUR_OPENAI_API_KEY"
+    ANTHROPIC_ON = ANTHROPIC_API_KEY != "YOUR_ANTHROPIC_API_KEY"
 except Exception:
-    OPENAI_ON = False
+    ANTHROPIC_ON = False
 
 def _algolia_search(keyword, report_type=None):
     """Query Algolia; return list of report dicts or None on failure."""
@@ -68,19 +68,20 @@ class HomeScreen(tk.Frame):
         # Mode selector
         mode_frm = tk.Frame(self, bg=BG)
         mode_frm.pack(fill="x", padx=PAD*2, pady=(PAD, 0))
-        tk.Label(mode_frm, text="Mode:", font=FONT_HEAD, bg=BG).pack(side="left")
+        tk.Label(mode_frm, text="Mode:", font=FONT_HEAD, bg=BG, fg="black").pack(side="left")
         self.mode_var = tk.StringVar(value="Lost")
         for val, label in [("Lost", "  I Lost an Item  "), ("Found", "  I Found an Item  ")]:
             tk.Radiobutton(mode_frm, text=label, variable=self.mode_var, value=val,
-                           font=FONT_BODY, bg=BG, activebackground=BG).pack(side="left", padx=8)
+                           font=FONT_BODY, bg=BG, fg="black",
+                           selectcolor=BG, activebackground=BG, activeforeground="black").pack(side="left", padx=8)
 
         # Search bar
         search_frm = tk.Frame(self, bg=BG)
         search_frm.pack(fill="x", padx=PAD*2, pady=(6, 0))
-        tk.Label(search_frm, text="Search:", font=FONT_HEAD, bg=BG).pack(side="left")
+        tk.Label(search_frm, text="Search:", font=FONT_HEAD, bg=BG, fg="black").pack(side="left")
         self.search_var = tk.StringVar()
         self.search_entry = tk.Entry(search_frm, textvariable=self.search_var,
-                                     font=FONT_BODY, width=45)
+                                     font=FONT_BODY, width=45, fg="black", bg="white")
         self.search_entry.pack(side="left", padx=(8, 4))
         self.search_entry.bind("<Return>", lambda e: self._do_search())
 
@@ -92,14 +93,14 @@ class HomeScreen(tk.Frame):
                    bg=BTN_SEC_BG).pack(side="left", padx=4)
 
         # AI Match button
-        ai_color = BTN_BG if OPENAI_ON else BTN_SEC_BG
+        ai_color = BTN_BG if ANTHROPIC_ON else BTN_SEC_BG
         self.ai_btn = styled_btn(btn_frm, "🤖  AI Match", self._do_ai_match, bg=ai_color)
         self.ai_btn.pack(side="left", padx=4)
-        if not OPENAI_ON:
+        if not ANTHROPIC_ON:
             self.ai_btn.config(state="disabled")
 
         # Results label
-        self.results_label = tk.Label(self, text="Results:", font=FONT_HEAD, bg=BG, anchor="w")
+        self.results_label = tk.Label(self, text="Results:", font=FONT_HEAD, bg=BG, fg="black", anchor="w")
         self.results_label.pack(fill="x", padx=PAD*2)
 
         # Results listbox
@@ -110,8 +111,9 @@ class HomeScreen(tk.Frame):
         scrollbar.pack(side="right", fill="y")
 
         self.results_box = tk.Listbox(list_frm, font=FONT_BODY, yscrollcommand=scrollbar.set,
+                                      fg="black", bg="white",
                                       selectbackground=ACCENT, selectforeground="white",
-                                      height=12, bg="white", relief="solid", bd=1)
+                                      height=12, relief="solid", bd=1)
         self.results_box.pack(fill="both", expand=True)
         scrollbar.config(command=self.results_box.yview)
         self.results_box.bind("<Double-Button-1>", self._on_result_select)
@@ -150,7 +152,7 @@ class HomeScreen(tk.Frame):
     def _do_ai_match(self):
         """
         Takes the keyword in the search bar as the lost item name,
-        finds its DB record, then sends it + all found reports to OpenAI.
+        finds its DB record, then sends it + all found reports to Anthropic Claude.
         Displays results ranked by match score.
         """
         keyword = self.search_var.get().strip()
@@ -173,17 +175,17 @@ class HomeScreen(tk.Frame):
             messagebox.showinfo("AI Match", "No found items in the system yet.")
             return
 
-        # Show a loading message while GPT works
+        # Show a loading message while Claude works
         self.results_label.config(text="🤖  AI Match running... please wait")
         self.update_idletasks()
 
-        # Call OpenAI — line 143 in openai_service.py does the actual API call
-        matches = openai_service.find_matches(lost_report, found_reports)
+        # Call Anthropic Claude API
+        matches = anthropic_service.find_matches(lost_report, found_reports)
 
         if not matches:
             self.results_label.config(text="Results:")
             messagebox.showerror("AI Match",
-                                 "OpenAI did not return results. Check your API key in config.py.")
+                                 "Claude did not return results. Check your API key in Configurations.py.")
             return
 
         self._display_ai_results(matches)
