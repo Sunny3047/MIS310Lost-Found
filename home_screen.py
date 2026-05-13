@@ -25,7 +25,7 @@ try:
 
     ANTHROPIC_ON = ANTHROPIC_API_KEY != "YOUR_ANTHROPIC_API_KEY"
 except Exception:
-    ANTHROPIC_ON = False
+    ANTHROPIC_ON = True
 
 def _algolia_search(keyword, report_type=None):
     """Query Algolia; return list of report dicts or None on failure."""

@@ -3,8 +3,8 @@
 # To use this, you need to sign up at onesignal.com and get your API key
 
 #Enter your keys here
-MY_APP_ID  = "YOUR_APP_ID_HERE"
-MY_API_KEY = "YOUR_API_KEY_HERE"
+MY_APP_ID  = "c0888fe8-03bf-4567-89d1-bdfe7ffb466e"
+MY_API_KEY = "os_v2_app_ycei72adx5cwpcorxx7h762gny7ilhdvvhgeo3fmcryxmeovgt2tydhj6j2gq6bssl5c2dcjqh5xtqh4uzghwscftkf5f3h4hk2pizq"
 
 # We need these built-in Python tools to send data over the internet
 import urllib.request

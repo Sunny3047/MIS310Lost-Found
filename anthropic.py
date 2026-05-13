@@ -1,41 +1,21 @@
 # anthropic_service.py
-# This file uses Anthropic's Claude API to match lost items with found items
 
 import json
-from Configurations import ANTHROPIC_API_KEY
-
-client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
 try:
     import anthropic
-
     ANTHROPIC_AVAILABLE = True
 except ImportError:
     ANTHROPIC_AVAILABLE = False
     print("Anthropic library not installed. Run: pip install anthropic")
 
+from Configurations import ANTHROPIC_API_KEY
+
 
 def find_matches(lost_report, found_reports):
-    """
-    Uses Claude to analyze a lost item report against all found items
-    and return ranked matches with scores and reasoning.
-
-    Args:
-        lost_report: Dict containing the lost item details
-        found_reports: List of dicts containing found item details
-
-    Returns:
-        List of found reports with added match_score and match_reason fields,
-        sorted by match score (highest first)
-    """
     if not ANTHROPIC_AVAILABLE:
         return []
 
-    if ANTHROPIC_API_KEY == "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":
-        print("Please set your Anthropic API key in Configurations.py")
-        return []
-
-    # Build the prompt for Claude
     lost_desc = f"""
 Lost Item:
 - Name: {lost_report['item_name']}
@@ -46,7 +26,7 @@ Lost Item:
 """
 
     found_list = "\n\n".join([
-        f"""Found Item #{i + 1} (ID: {r['id']}):
+        f"""Found Item #{i+1} (ID: {r['id']}):
 - Name: {r['item_name']}
 - Category: {r['category']}
 - Description: {r.get('description', 'N/A')}
@@ -60,7 +40,7 @@ Lost Item:
 Found Items in Database:
 {found_list}
 
-Analyze each found item and determine how likely it is to match the lost item. 
+Analyze each found item and determine how likely it is to match the lost item.
 For each found item, provide:
 1. A match score from 0-100 (100 = definite match, 0 = no match)
 2. A brief reason for the score (one sentence)
@@ -80,25 +60,16 @@ Only return the JSON array, no other text."""
         response = client.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=2000,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
+            messages=[{"role": "user", "content": prompt}]
         )
 
-        # Extract the text from Claude's response
         response_text = response.content[0].text.strip()
-
-        # Parse the JSON response
         matches_data = json.loads(response_text)
 
-        # Merge the scores back with the full report data
         results = []
         for match in matches_data:
-            match_id = match["id"]
-            # Find the corresponding found report
-            found_report = next((r for r in found_reports if r["id"] == match_id), None)
+            found_report = next((r for r in found_reports if r["id"] == match["id"]), None)
             if found_report:
-                # Add the AI scoring to the report
                 found_report["match_score"] = match["match_score"]
                 found_report["match_reason"] = match["match_reason"]
                 results.append(found_report)
@@ -107,7 +78,6 @@ Only return the JSON array, no other text."""
 
     except json.JSONDecodeError as e:
         print(f"Error parsing Claude response: {e}")
-        print(f"Response was: {response_text}")
         return []
     except Exception as e:
         print(f"Error calling Anthropic API: {e}")
