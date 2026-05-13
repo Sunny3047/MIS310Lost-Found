@@ -4,6 +4,8 @@
 import json
 from Configurations import ANTHROPIC_API_KEY
 
+client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+
 try:
     import anthropic
 
@@ -29,7 +31,7 @@ def find_matches(lost_report, found_reports):
     if not ANTHROPIC_AVAILABLE:
         return []
 
-    if ANTHROPIC_API_KEY == "YOUR_ANTHROPIC_API_KEY":
+    if ANTHROPIC_API_KEY == "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":
         print("Please set your Anthropic API key in Configurations.py")
         return []
 
